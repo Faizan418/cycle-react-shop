@@ -67,18 +67,22 @@ export function Header() {
               <Heart className="h-5 w-5" />
               <BadgeCount count={3} className="absolute -right-1 -top-1" />
             </Button>
-            <Button variant="ghost" size="icon" className="relative text-cycle-dark hover:text-cycle">
-              <ShoppingCart className="h-5 w-5" />
-              <BadgeCount count={2} className="absolute -right-1 -top-1" />
-            </Button>
+            <Link to="/cart">
+              <Button variant="ghost" size="icon" className="relative text-cycle-dark hover:text-cycle">
+                <ShoppingCart className="h-5 w-5" />
+                <BadgeCount count={2} className="absolute -right-1 -top-1" />
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu & Actions */}
           <div className="flex items-center space-x-2 lg:hidden">
-            <Button variant="ghost" size="icon" className="relative text-cycle-dark">
-              <ShoppingCart className="h-5 w-5" />
-              <BadgeCount count={2} className="absolute -right-1 -top-1" />
-            </Button>
+            <Link to="/cart">
+              <Button variant="ghost" size="icon" className="relative text-cycle-dark">
+                <ShoppingCart className="h-5 w-5" />
+                <BadgeCount count={2} className="absolute -right-1 -top-1" />
+              </Button>
+            </Link>
             
             <Sheet>
               <SheetTrigger asChild>
@@ -108,6 +112,12 @@ export function Header() {
                       {link.name}
                     </Link>
                   ))}
+                  <Link
+                    to="/cart"
+                    className="text-base font-medium text-cycle-dark hover:text-cycle transition-colors"
+                  >
+                    Cart
+                  </Link>
                 </nav>
                 
                 <div className="mt-8 space-y-4">
