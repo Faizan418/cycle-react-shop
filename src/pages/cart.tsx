@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, createContext, useContext, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -7,6 +7,7 @@ import { Price } from "@/components/ui/price";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Minus, Plus, Trash, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 
 // Sample cart items data
 const initialCartItems = [
@@ -30,9 +31,126 @@ const initialCartItems = [
     size: "S",
     quantity: 1,
   },
+  {
+    id: "2",
+    name: "Urban Commuter C200",
+    price: 449.99,
+    originalPrice: 499.99,
+    imageSrc: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmljeWNsZXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60",
+    color: "Black",
+    size: "L",
+    quantity: 1,
+  },
+  {
+    id: "3",
+    name: "Road Master R1000",
+    price: 899.99,
+    originalPrice: 999.99,
+    imageSrc: "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8cm9hZCUyMGJpa2V8ZW58MHx8MHx8&auto=format&fit=crop&w=800&q=60",
+    color: "Silver",
+    size: "M",
+    quantity: 1,
+  },
 ];
 
+// Create CartContext to share cart functionality across components
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  imageSrc: string;
+  color: string;
+  size: string;
+  quantity: number;
+}
+
+interface CartContextType {
+  cartItems: CartItem[];
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (id: string) => void;
+  incrementQuantity: (id: string) => void;
+  decrementQuantity: (id: string) => void;
+  clearCart: () => void;
+}
+
+const CartContext = createContext<CartContextType | undefined>(undefined);
+
+export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
+
+  const addToCart = (item: CartItem) => {
+    const existingItem = cartItems.find((i) => i.id === item.id);
+    if (existingItem) {
+      setCartItems(
+        cartItems.map((i) =>
+          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+        )
+      );
+    } else {
+      setCartItems([...cartItems, { ...item, quantity: 1 }]);
+    }
+    toast.success(`${item.name} added to cart`);
+  };
+
+  const removeFromCart = (id: string) => {
+    const itemToRemove = cartItems.find((item) => item.id === id);
+    setCartItems(cartItems.filter((item) => item.id !== id));
+    if (itemToRemove) {
+      toast.success(`${itemToRemove.name} removed from cart`);
+    }
+  };
+
+  const incrementQuantity = (id: string) => {
+    setCartItems(
+      cartItems.map((item) =>
+        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+      )
+    );
+  };
+
+  const decrementQuantity = (id: string) => {
+    setCartItems(
+      cartItems.map((item) =>
+        item.id === id && item.quantity > 1 
+          ? { ...item, quantity: item.quantity - 1 } 
+          : item
+      )
+    );
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+    toast.success("Cart cleared");
+  };
+
+  return (
+    <CartContext.Provider
+      value={{
+        cartItems,
+        addToCart,
+        removeFromCart,
+        incrementQuantity,
+        decrementQuantity,
+        clearCart,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
+};
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (context === undefined) {
+    throw new Error("useCart must be used within a CartProvider");
+  }
+  return context;
+};
+
 export default function Cart() {
+  // In a real app, we would wrap the app with CartProvider
+  // For this example, we'll include the state directly in the cart page
   const [cartItems, setCartItems] = useState(initialCartItems);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
@@ -54,14 +172,19 @@ export default function Cart() {
   };
 
   const removeItem = (id: string) => {
+    const itemToRemove = cartItems.find((item) => item.id === id);
     setCartItems(cartItems.filter((item) => item.id !== id));
+    if (itemToRemove) {
+      toast.success(`${itemToRemove.name} removed from cart`);
+    }
   };
 
   const applyPromoCode = () => {
     if (promoCode.toLowerCase() === "cycle10") {
       setPromoApplied(true);
+      toast.success("Promo code applied: 10% discount");
     } else {
-      alert("Invalid promo code");
+      toast.error("Invalid promo code");
     }
   };
 
@@ -117,7 +240,7 @@ export default function Cart() {
                             <div className="flex items-center">
                               <button
                                 onClick={() => decrementQuantity(item.id)}
-                                className="flex h-8 w-8 items-center justify-center border border-r-0 border-gray-300"
+                                className="flex h-8 w-8 items-center justify-center border border-r-0 border-gray-300 hover:bg-gray-100"
                               >
                                 <Minus className="h-3 w-3" />
                               </button>
@@ -126,7 +249,7 @@ export default function Cart() {
                               </div>
                               <button
                                 onClick={() => incrementQuantity(item.id)}
-                                className="flex h-8 w-8 items-center justify-center border border-l-0 border-gray-300"
+                                className="flex h-8 w-8 items-center justify-center border border-l-0 border-gray-300 hover:bg-gray-100"
                               >
                                 <Plus className="h-3 w-3" />
                               </button>
@@ -146,46 +269,44 @@ export default function Cart() {
                   ))}
 
                   <div className="p-4 md:p-6">
-                    <div className="flex justify-between">
-                      <div className="flex">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                      <div className="flex max-w-xs">
                         <Input
                           placeholder="Promo Code"
-                          className="w-32 sm:w-48 lg:w-64"
+                          className="w-full sm:w-48 lg:w-64 rounded-r-none"
                           value={promoCode}
                           onChange={(e) => setPromoCode(e.target.value)}
                         />
                         <Button
                           onClick={applyPromoCode}
-                          className="ml-2 bg-cycle hover:bg-cycle-dark"
+                          className="rounded-l-none bg-cycle hover:bg-cycle-dark"
                           disabled={promoApplied}
                         >
                           Apply
                         </Button>
                       </div>
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="hidden sm:flex"
-                      >
-                        <Link to="/products">
-                          Continue Shopping
-                        </Link>
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => {
+                            setCartItems([]);
+                            toast.success("Cart cleared");
+                          }}
+                        >
+                          Clear Cart
+                        </Button>
+                        <Button
+                          asChild
+                          variant="outline"
+                        >
+                          <Link to="/products">
+                            Continue Shopping
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Mobile Continue Shopping */}
-                <div className="mt-4 sm:hidden">
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <Link to="/products">
-                      Continue Shopping
-                    </Link>
-                  </Button>
                 </div>
               </div>
 
@@ -196,7 +317,7 @@ export default function Cart() {
 
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-cycle-gray">Subtotal</span>
+                      <span className="text-cycle-gray">Subtotal ({cartItems.reduce((acc, item) => acc + item.quantity, 0)} items)</span>
                       <span>${subtotal.toFixed(2)}</span>
                     </div>
 
@@ -241,12 +362,12 @@ export default function Cart() {
                   <p className="mb-3 text-sm text-cycle-gray">
                     Our customer service team is here to help you with any questions.
                   </p>
-                  <a
-                    href="/contact"
+                  <Link
+                    to="/contact"
                     className="text-sm font-medium text-cycle hover:underline"
                   >
                     Contact Support
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
