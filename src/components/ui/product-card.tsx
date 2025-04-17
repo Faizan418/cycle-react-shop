@@ -47,8 +47,18 @@ export function ProductCard({
 
   React.useEffect(() => {
     // Update wishlisted state when localStorage changes
-    const wishlist = getWishlist();
-    setIsWishlisted(wishlist.includes(id));
+    const handleStorageChange = () => {
+      const wishlist = getWishlist();
+      setIsWishlisted(wishlist.includes(id));
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('wishlistUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('wishlistUpdated', handleStorageChange);
+    };
   }, [id]);
 
   const handleAddToCart = () => {
@@ -79,6 +89,10 @@ export function ProductCard({
     
     // Save updated cart back to localStorage
     localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Dispatch custom event for cart update
+    window.dispatchEvent(new Event('cartUpdated'));
+    
     toast.success(`${name} added to cart`);
   };
 
@@ -99,6 +113,9 @@ export function ProductCard({
       setIsWishlisted(true);
       toast.success(`${name} added to wishlist`);
     }
+    
+    // Dispatch custom event for wishlist update
+    window.dispatchEvent(new Event('wishlistUpdated'));
   };
 
   return (

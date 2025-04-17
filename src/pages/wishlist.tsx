@@ -1,14 +1,27 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ui/product-card";
 import { Trash, ShoppingBag, Heart } from "lucide-react";
+import { toast } from "sonner";
 
-// Sample wishlist items
-const initialWishlistItems = [
+// Product data interface
+interface ProductData {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  imageSrc: string;
+  category: string;
+  isNew?: boolean;
+  isSale?: boolean;
+}
+
+// Sample products database (in a real app, this would come from an API)
+const productsDatabase = [
   {
     id: "1",
     name: "Mountain Explorer X500",
@@ -39,10 +52,56 @@ const initialWishlistItems = [
 ];
 
 export default function Wishlist() {
-  const [wishlistItems, setWishlistItems] = useState(initialWishlistItems);
+  const [wishlistItems, setWishlistItems] = useState<ProductData[]>([]);
+
+  // Load wishlist from localStorage on component mount
+  useEffect(() => {
+    const loadWishlist = () => {
+      const wishlistData = localStorage.getItem('wishlist');
+      if (wishlistData) {
+        const wishlistIds = JSON.parse(wishlistData) as string[];
+        // Filter products to only include those in the wishlist
+        const items = productsDatabase.filter(product => wishlistIds.includes(product.id));
+        setWishlistItems(items);
+      } else {
+        setWishlistItems([]);
+      }
+    };
+
+    // Load initial wishlist
+    loadWishlist();
+    
+    // Add event listener for wishlist updates
+    window.addEventListener('wishlistUpdated', loadWishlist);
+    window.addEventListener('storage', loadWishlist);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('wishlistUpdated', loadWishlist);
+      window.removeEventListener('storage', loadWishlist);
+    };
+  }, []);
 
   const removeItem = (id: string) => {
-    setWishlistItems(wishlistItems.filter(item => item.id !== id));
+    // Get current wishlist
+    const wishlistData = localStorage.getItem('wishlist');
+    if (wishlistData) {
+      const wishlist = JSON.parse(wishlistData) as string[];
+      // Remove the item
+      const updatedWishlist = wishlist.filter(itemId => itemId !== id);
+      // Save back to localStorage
+      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+      
+      // Update state
+      setWishlistItems(wishlistItems.filter(item => item.id !== id));
+      
+      // Dispatch event for any listeners
+      window.dispatchEvent(new Event('wishlistUpdated'));
+      
+      // Show toast
+      const itemName = wishlistItems.find(item => item.id === id)?.name || 'Item';
+      toast.success(`${itemName} removed from wishlist`);
+    }
   };
 
   return (

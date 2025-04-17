@@ -15,15 +15,33 @@ export default function Cart() {
 
   // Load cart from localStorage on component mount
   useEffect(() => {
-    const storedCart = localStorage.getItem('cart');
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
-    }
+    const loadCart = () => {
+      const storedCart = localStorage.getItem('cart');
+      if (storedCart) {
+        setCartItems(JSON.parse(storedCart));
+      } else {
+        setCartItems([]);
+      }
+    };
+    
+    // Initial load
+    loadCart();
+    
+    // Listen for storage changes
+    window.addEventListener('storage', loadCart);
+    window.addEventListener('cartUpdated', loadCart);
+    
+    return () => {
+      window.removeEventListener('storage', loadCart);
+      window.removeEventListener('cartUpdated', loadCart);
+    };
   }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event('cartUpdated'));
   }, [cartItems]);
 
   const incrementQuantity = (id: string) => {

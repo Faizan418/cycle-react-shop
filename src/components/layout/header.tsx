@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Search, ShoppingCart, Heart, User, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   CommandDialog, 
   CommandInput, 
@@ -16,12 +16,55 @@ import {
   CommandGroup, 
   CommandItem 
 } from "@/components/ui/command";
+import { CartItemType } from "@/components/cart/types";
 
 export function Header() {
   const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Update cart and wishlist count when localStorage changes
+  useEffect(() => {
+    const updateCounts = () => {
+      // Get cart count
+      const cartData = localStorage.getItem('cart');
+      if (cartData) {
+        const cart: CartItemType[] = JSON.parse(cartData);
+        setCartCount(cart.length);
+      } else {
+        setCartCount(0);
+      }
+
+      // Get wishlist count
+      const wishlistData = localStorage.getItem('wishlist');
+      if (wishlistData) {
+        const wishlist: string[] = JSON.parse(wishlistData);
+        setWishlistCount(wishlist.length);
+      } else {
+        setWishlistCount(0);
+      }
+    };
+
+    // Initial update
+    updateCounts();
+
+    // Listen for storage changes
+    window.addEventListener('storage', updateCounts);
+    
+    // Custom event listener for cart/wishlist updates
+    const handleCustomStorageEvent = () => updateCounts();
+    window.addEventListener('cartUpdated', handleCustomStorageEvent);
+    window.addEventListener('wishlistUpdated', handleCustomStorageEvent);
+    
+    return () => {
+      window.removeEventListener('storage', updateCounts);
+      window.removeEventListener('cartUpdated', handleCustomStorageEvent);
+      window.removeEventListener('wishlistUpdated', handleCustomStorageEvent);
+    };
+  }, []);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -113,13 +156,13 @@ export function Header() {
               <Link to="/wishlist">
                 <Button variant="ghost" size="icon" className="relative text-cycle-dark hover:text-cycle">
                   <Heart className="h-5 w-5" />
-                  <BadgeCount count={3} className="absolute -right-1 -top-1" />
+                  {wishlistCount > 0 && <BadgeCount count={wishlistCount} className="absolute -right-1 -top-1" />}
                 </Button>
               </Link>
               <Link to="/cart">
                 <Button variant="ghost" size="icon" className="relative text-cycle-dark hover:text-cycle">
                   <ShoppingCart className="h-5 w-5" />
-                  <BadgeCount count={2} className="absolute -right-1 -top-1" />
+                  {cartCount > 0 && <BadgeCount count={cartCount} className="absolute -right-1 -top-1" />}
                 </Button>
               </Link>
             </div>
@@ -129,7 +172,7 @@ export function Header() {
               <Link to="/cart">
                 <Button variant="ghost" size="icon" className="relative text-cycle-dark">
                   <ShoppingCart className="h-5 w-5" />
-                  <BadgeCount count={2} className="absolute -right-1 -top-1" />
+                  {cartCount > 0 && <BadgeCount count={cartCount} className="absolute -right-1 -top-1" />}
                 </Button>
               </Link>
               
