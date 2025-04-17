@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Price } from "@/components/ui/price";
 import { ShoppingCart, Heart } from "lucide-react";
 import { toast } from "sonner";
+import { CartItemType } from "@/components/cart/types";
 
 interface ProductCardProps {
   id: string;
@@ -32,20 +33,72 @@ export function ProductCard({
   ...props
 }: ProductCardProps & React.HTMLAttributes<HTMLDivElement>) {
   const isDiscounted = !!originalPrice && originalPrice > price;
-  const [isWishlisted, setIsWishlisted] = React.useState(false);
+  
+  // Get wishlist from localStorage
+  const getWishlist = (): string[] => {
+    const wishlistData = localStorage.getItem('wishlist');
+    return wishlistData ? JSON.parse(wishlistData) : [];
+  };
+  
+  const [isWishlisted, setIsWishlisted] = React.useState(() => {
+    const wishlist = getWishlist();
+    return wishlist.includes(id);
+  });
+
+  React.useEffect(() => {
+    // Update wishlisted state when localStorage changes
+    const wishlist = getWishlist();
+    setIsWishlisted(wishlist.includes(id));
+  }, [id]);
 
   const handleAddToCart = () => {
-    // In a real app, this would use the CartContext
+    // Get current cart from localStorage
+    const cartData = localStorage.getItem('cart');
+    const cart: CartItemType[] = cartData ? JSON.parse(cartData) : [];
+    
+    // Check if product already exists in cart
+    const existingItemIndex = cart.findIndex(item => item.id === id);
+    
+    if (existingItemIndex !== -1) {
+      // Update quantity if item exists
+      cart[existingItemIndex].quantity += 1;
+    } else {
+      // Add new item to cart with default values
+      const newItem: CartItemType = {
+        id,
+        name,
+        price,
+        originalPrice,
+        imageSrc,
+        color: "Default", // This is a simplification, in real app we'd prompt for color/size
+        size: "Default",
+        quantity: 1
+      };
+      cart.push(newItem);
+    }
+    
+    // Save updated cart back to localStorage
+    localStorage.setItem('cart', JSON.stringify(cart));
     toast.success(`${name} added to cart`);
   };
 
   const toggleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    toast.success(
-      isWishlisted 
-        ? `${name} removed from wishlist` 
-        : `${name} added to wishlist`
-    );
+    // Get current wishlist from localStorage
+    const wishlist = getWishlist();
+    
+    if (isWishlisted) {
+      // Remove from wishlist
+      const updatedWishlist = wishlist.filter(itemId => itemId !== id);
+      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+      setIsWishlisted(false);
+      toast.success(`${name} removed from wishlist`);
+    } else {
+      // Add to wishlist
+      wishlist.push(id);
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+      setIsWishlisted(true);
+      toast.success(`${name} added to wishlist`);
+    }
   };
 
   return (

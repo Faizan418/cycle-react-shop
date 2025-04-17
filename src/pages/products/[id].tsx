@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { FeaturedProducts } from "@/components/home/featured-products";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Price } from "@/components/ui/price";
 import { Minus, Plus, Check, ShoppingCart, Heart, Truck, RotateCcw, Shield } from "lucide-react";
+import { toast } from "sonner";
+import { CartItemType } from "@/components/cart/types";
 
 // Sample products data
 const products = [
@@ -77,8 +79,31 @@ const products = [
   },
 ];
 
+// Function to retrieve cart from local storage
+const getCartFromStorage = (): CartItemType[] => {
+  const cartData = localStorage.getItem('cart');
+  return cartData ? JSON.parse(cartData) : [];
+};
+
+// Function to save cart to local storage
+const saveCartToStorage = (cart: CartItemType[]) => {
+  localStorage.setItem('cart', JSON.stringify(cart));
+};
+
+// Function to retrieve wishlist from local storage
+const getWishlistFromStorage = (): string[] => {
+  const wishlistData = localStorage.getItem('wishlist');
+  return wishlistData ? JSON.parse(wishlistData) : [];
+};
+
+// Function to save wishlist to local storage
+const saveWishlistToStorage = (wishlist: string[]) => {
+  localStorage.setItem('wishlist', JSON.stringify(wishlist));
+};
+
 export default function ProductDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
@@ -87,8 +112,74 @@ export default function ProductDetail() {
   // Find product by ID
   const product = products.find((p) => p.id === id) || products[0];
 
+  // Check if product is in wishlist
+  const wishlist = getWishlistFromStorage();
+  const [isInWishlist, setIsInWishlist] = useState(wishlist.includes(product.id));
+
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+
+  const addToCart = () => {
+    if (!selectedColor) {
+      toast.error("Please select a color");
+      return;
+    }
+    
+    if (!selectedSize) {
+      toast.error("Please select a size");
+      return;
+    }
+    
+    const cart = getCartFromStorage();
+    
+    // Check if product already exists in cart with the same color and size
+    const existingItemIndex = cart.findIndex(
+      item => item.id === product.id && item.color === selectedColor && item.size === selectedSize
+    );
+    
+    if (existingItemIndex !== -1) {
+      // Update quantity if item exists
+      cart[existingItemIndex].quantity += quantity;
+    } else {
+      // Add new item to cart
+      const newItem: CartItemType = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        imageSrc: product.images[0],
+        color: selectedColor,
+        size: selectedSize,
+        quantity: quantity
+      };
+      cart.push(newItem);
+    }
+    
+    saveCartToStorage(cart);
+    toast.success(`${product.name} added to cart`);
+  };
+
+  const toggleWishlist = () => {
+    const wishlist = getWishlistFromStorage();
+    
+    if (isInWishlist) {
+      // Remove from wishlist
+      const updatedWishlist = wishlist.filter(itemId => itemId !== product.id);
+      saveWishlistToStorage(updatedWishlist);
+      setIsInWishlist(false);
+      toast.success(`${product.name} removed from wishlist`);
+    } else {
+      // Add to wishlist
+      wishlist.push(product.id);
+      saveWishlistToStorage(wishlist);
+      setIsInWishlist(true);
+      toast.success(`${product.name} added to wishlist`);
+    }
+  };
+
+  const goToCart = () => {
+    navigate('/cart');
+  };
 
   if (!product) {
     return <div>Product not found</div>;
@@ -201,13 +292,17 @@ export default function ProductDetail() {
               </div>
 
               <div className="mb-6 flex flex-wrap gap-4">
-                <Button className="btn-cycle flex-1 sm:flex-none">
+                <Button className="btn-cycle flex-1 sm:flex-none" onClick={addToCart}>
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   Add to Cart
                 </Button>
-                <Button variant="outline" className="flex-1 sm:flex-none">
-                  <Heart className="mr-2 h-4 w-4" />
-                  Add to Wishlist
+                <Button
+                  variant="outline"
+                  className={`flex-1 sm:flex-none ${isInWishlist ? "bg-pink-50 text-pink-600 border-pink-200" : ""}`}
+                  onClick={toggleWishlist}
+                >
+                  <Heart className="mr-2 h-4 w-4" fill={isInWishlist ? "currentColor" : "none"} />
+                  {isInWishlist ? "In Wishlist" : "Add to Wishlist"}
                 </Button>
               </div>
 

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { toast } from "sonner";
@@ -8,54 +8,23 @@ import { OrderSummary } from "@/components/cart/OrderSummary";
 import { EmptyCart } from "@/components/cart/EmptyCart";
 import { CartItemType } from "@/components/cart/types";
 
-// Sample cart items data
-const initialCartItems: CartItemType[] = [
-  {
-    id: "1",
-    name: "Mountain Explorer X500",
-    price: 599.99,
-    originalPrice: 749.99,
-    imageSrc: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8YmljeWNsZXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60",
-    color: "Red",
-    size: "M",
-    quantity: 1,
-  },
-  {
-    id: "4",
-    name: "Kids Adventure Bike",
-    price: 249.99,
-    originalPrice: 299.99,
-    imageSrc: "https://images.unsplash.com/photo-1597265845623-816bd256d4b2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTV8fGJpa2UlMjBmb3IlMjBraWRzfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60",
-    color: "Blue",
-    size: "S",
-    quantity: 1,
-  },
-  {
-    id: "2",
-    name: "Urban Commuter C200",
-    price: 449.99,
-    originalPrice: 499.99,
-    imageSrc: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmljeWNsZXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60",
-    color: "Black",
-    size: "L",
-    quantity: 1,
-  },
-  {
-    id: "3",
-    name: "Road Master R1000",
-    price: 899.99,
-    originalPrice: 999.99,
-    imageSrc: "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8cm9hZCUyMGJpa2V8ZW58MHx8MHx8&auto=format&fit=crop&w=800&q=60",
-    color: "Silver",
-    size: "M",
-    quantity: 1,
-  },
-];
-
 export default function Cart() {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
+
+  // Load cart from localStorage on component mount
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cart');
+    if (storedCart) {
+      setCartItems(JSON.parse(storedCart));
+    }
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const incrementQuantity = (id: string) => {
     setCartItems(
@@ -75,7 +44,9 @@ export default function Cart() {
 
   const removeItem = (id: string) => {
     const itemToRemove = cartItems.find((item) => item.id === id);
-    setCartItems(cartItems.filter((item) => item.id !== id));
+    const updatedCart = cartItems.filter((item) => item.id !== id);
+    setCartItems(updatedCart);
+    
     if (itemToRemove) {
       toast.success(`${itemToRemove.name} removed from cart`);
     }

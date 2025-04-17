@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ui/product-card";
-import { Trash, ShoppingBag } from "lucide-react";
+import { Trash, ShoppingBag, Heart } from "lucide-react";
 
 // Sample wishlist items
 const initialWishlistItems = [
