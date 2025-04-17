@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -81,24 +81,46 @@ const products = [
 
 // Function to retrieve cart from local storage
 const getCartFromStorage = (): CartItemType[] => {
-  const cartData = localStorage.getItem('cart');
-  return cartData ? JSON.parse(cartData) : [];
+  try {
+    const cartData = localStorage.getItem('cart');
+    return cartData ? JSON.parse(cartData) : [];
+  } catch (error) {
+    console.error("Error getting cart from storage:", error);
+    return [];
+  }
 };
 
 // Function to save cart to local storage
 const saveCartToStorage = (cart: CartItemType[]) => {
-  localStorage.setItem('cart', JSON.stringify(cart));
+  try {
+    localStorage.setItem('cart', JSON.stringify(cart));
+    // Dispatch custom event
+    window.dispatchEvent(new Event('cartUpdated'));
+  } catch (error) {
+    console.error("Error saving cart to storage:", error);
+  }
 };
 
 // Function to retrieve wishlist from local storage
 const getWishlistFromStorage = (): string[] => {
-  const wishlistData = localStorage.getItem('wishlist');
-  return wishlistData ? JSON.parse(wishlistData) : [];
+  try {
+    const wishlistData = localStorage.getItem('wishlist');
+    return wishlistData ? JSON.parse(wishlistData) : [];
+  } catch (error) {
+    console.error("Error getting wishlist from storage:", error);
+    return [];
+  }
 };
 
 // Function to save wishlist to local storage
 const saveWishlistToStorage = (wishlist: string[]) => {
-  localStorage.setItem('wishlist', JSON.stringify(wishlist));
+  try {
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    // Dispatch custom event
+    window.dispatchEvent(new Event('wishlistUpdated'));
+  } catch (error) {
+    console.error("Error saving wishlist to storage:", error);
+  }
 };
 
 export default function ProductDetail() {
@@ -111,10 +133,29 @@ export default function ProductDetail() {
 
   // Find product by ID
   const product = products.find((p) => p.id === id) || products[0];
+  console.log("Product data:", product);
 
   // Check if product is in wishlist
-  const wishlist = getWishlistFromStorage();
-  const [isInWishlist, setIsInWishlist] = useState(wishlist.includes(product.id));
+  const [isInWishlist, setIsInWishlist] = useState(() => {
+    const wishlist = getWishlistFromStorage();
+    return wishlist.includes(product.id);
+  });
+
+  // Update wishlist state when storage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const wishlist = getWishlistFromStorage();
+      setIsInWishlist(wishlist.includes(product.id));
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('wishlistUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('wishlistUpdated', handleStorageChange);
+    };
+  }, [product.id]);
 
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
@@ -130,50 +171,61 @@ export default function ProductDetail() {
       return;
     }
     
-    const cart = getCartFromStorage();
-    
-    // Check if product already exists in cart with the same color and size
-    const existingItemIndex = cart.findIndex(
-      item => item.id === product.id && item.color === selectedColor && item.size === selectedSize
-    );
-    
-    if (existingItemIndex !== -1) {
-      // Update quantity if item exists
-      cart[existingItemIndex].quantity += quantity;
-    } else {
-      // Add new item to cart
-      const newItem: CartItemType = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        originalPrice: product.originalPrice,
-        imageSrc: product.images[0],
-        color: selectedColor,
-        size: selectedSize,
-        quantity: quantity
-      };
-      cart.push(newItem);
+    try {
+      const cart = getCartFromStorage();
+      
+      // Check if product already exists in cart with the same color and size
+      const existingItemIndex = cart.findIndex(
+        item => item.id === product.id && item.color === selectedColor && item.size === selectedSize
+      );
+      
+      if (existingItemIndex !== -1) {
+        // Update quantity if item exists
+        cart[existingItemIndex].quantity += quantity;
+      } else {
+        // Add new item to cart
+        const newItem: CartItemType = {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          originalPrice: product.originalPrice,
+          imageSrc: product.images[0],
+          color: selectedColor,
+          size: selectedSize,
+          quantity: quantity
+        };
+        cart.push(newItem);
+      }
+      
+      console.log("Saving cart with new item:", cart);
+      saveCartToStorage(cart);
+      toast.success(`${product.name} added to cart`);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Failed to add item to cart");
     }
-    
-    saveCartToStorage(cart);
-    toast.success(`${product.name} added to cart`);
   };
 
   const toggleWishlist = () => {
-    const wishlist = getWishlistFromStorage();
-    
-    if (isInWishlist) {
-      // Remove from wishlist
-      const updatedWishlist = wishlist.filter(itemId => itemId !== product.id);
-      saveWishlistToStorage(updatedWishlist);
-      setIsInWishlist(false);
-      toast.success(`${product.name} removed from wishlist`);
-    } else {
-      // Add to wishlist
-      wishlist.push(product.id);
-      saveWishlistToStorage(wishlist);
-      setIsInWishlist(true);
-      toast.success(`${product.name} added to wishlist`);
+    try {
+      const wishlist = getWishlistFromStorage();
+      
+      if (isInWishlist) {
+        // Remove from wishlist
+        const updatedWishlist = wishlist.filter(itemId => itemId !== product.id);
+        saveWishlistToStorage(updatedWishlist);
+        setIsInWishlist(false);
+        toast.success(`${product.name} removed from wishlist`);
+      } else {
+        // Add to wishlist
+        wishlist.push(product.id);
+        saveWishlistToStorage(wishlist);
+        setIsInWishlist(true);
+        toast.success(`${product.name} added to wishlist`);
+      }
+    } catch (error) {
+      console.error("Error updating wishlist:", error);
+      toast.error("Failed to update wishlist");
     }
   };
 

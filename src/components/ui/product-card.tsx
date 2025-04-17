@@ -62,60 +62,71 @@ export function ProductCard({
   }, [id]);
 
   const handleAddToCart = () => {
-    // Get current cart from localStorage
-    const cartData = localStorage.getItem('cart');
-    const cart: CartItemType[] = cartData ? JSON.parse(cartData) : [];
-    
-    // Check if product already exists in cart
-    const existingItemIndex = cart.findIndex(item => item.id === id);
-    
-    if (existingItemIndex !== -1) {
-      // Update quantity if item exists
-      cart[existingItemIndex].quantity += 1;
-    } else {
-      // Add new item to cart with default values
-      const newItem: CartItemType = {
-        id,
-        name,
-        price,
-        originalPrice,
-        imageSrc,
-        color: "Default", // This is a simplification, in real app we'd prompt for color/size
-        size: "Default",
-        quantity: 1
-      };
-      cart.push(newItem);
+    try {
+      // Get current cart from localStorage
+      const cartData = localStorage.getItem('cart');
+      const cart: CartItemType[] = cartData ? JSON.parse(cartData) : [];
+      
+      // Check if product already exists in cart
+      const existingItemIndex = cart.findIndex(item => item.id === id);
+      
+      if (existingItemIndex !== -1) {
+        // Update quantity if item exists
+        cart[existingItemIndex].quantity += 1;
+      } else {
+        // Add new item to cart with default values
+        const newItem: CartItemType = {
+          id,
+          name,
+          price,
+          originalPrice,
+          imageSrc,
+          color: "Default", // This is a simplification, in real app we'd prompt for color/size
+          size: "Default",
+          quantity: 1
+        };
+        cart.push(newItem);
+      }
+      
+      console.log("Saving cart to localStorage:", cart);
+      // Save updated cart back to localStorage
+      localStorage.setItem('cart', JSON.stringify(cart));
+      
+      // Dispatch custom event for cart update
+      window.dispatchEvent(new Event('cartUpdated'));
+      
+      toast.success(`${name} added to cart`);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Failed to add item to cart");
     }
-    
-    // Save updated cart back to localStorage
-    localStorage.setItem('cart', JSON.stringify(cart));
-    
-    // Dispatch custom event for cart update
-    window.dispatchEvent(new Event('cartUpdated'));
-    
-    toast.success(`${name} added to cart`);
   };
 
   const toggleWishlist = () => {
-    // Get current wishlist from localStorage
-    const wishlist = getWishlist();
-    
-    if (isWishlisted) {
-      // Remove from wishlist
-      const updatedWishlist = wishlist.filter(itemId => itemId !== id);
-      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
-      setIsWishlisted(false);
-      toast.success(`${name} removed from wishlist`);
-    } else {
-      // Add to wishlist
-      wishlist.push(id);
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      setIsWishlisted(true);
-      toast.success(`${name} added to wishlist`);
+    try {
+      // Get current wishlist from localStorage
+      const wishlist = getWishlist();
+      
+      if (isWishlisted) {
+        // Remove from wishlist
+        const updatedWishlist = wishlist.filter(itemId => itemId !== id);
+        localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+        setIsWishlisted(false);
+        toast.success(`${name} removed from wishlist`);
+      } else {
+        // Add to wishlist
+        wishlist.push(id);
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        setIsWishlisted(true);
+        toast.success(`${name} added to wishlist`);
+      }
+      
+      // Dispatch custom event for wishlist update
+      window.dispatchEvent(new Event('wishlistUpdated'));
+    } catch (error) {
+      console.error("Error updating wishlist:", error);
+      toast.error("Failed to update wishlist");
     }
-    
-    // Dispatch custom event for wishlist update
-    window.dispatchEvent(new Event('wishlistUpdated'));
   };
 
   return (

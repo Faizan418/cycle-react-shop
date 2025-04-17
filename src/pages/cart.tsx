@@ -16,10 +16,18 @@ export default function Cart() {
   // Load cart from localStorage on component mount
   useEffect(() => {
     const loadCart = () => {
-      const storedCart = localStorage.getItem('cart');
-      if (storedCart) {
-        setCartItems(JSON.parse(storedCart));
-      } else {
+      try {
+        const storedCart = localStorage.getItem('cart');
+        if (storedCart) {
+          const parsedCart = JSON.parse(storedCart);
+          console.log("Loading cart from localStorage:", parsedCart);
+          setCartItems(parsedCart);
+        } else {
+          console.log("No cart found in localStorage");
+          setCartItems([]);
+        }
+      } catch (error) {
+        console.error("Error loading cart from localStorage:", error);
         setCartItems([]);
       }
     };

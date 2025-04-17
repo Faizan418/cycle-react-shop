@@ -1,15 +1,14 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ui/product-card";
-import { Trash, ShoppingBag, Heart } from "lucide-react";
 import { toast } from "sonner";
+import { ShoppingCart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
-// Product data interface
-interface ProductData {
+interface WishlistProduct {
   id: string;
   name: string;
   price: number;
@@ -20,8 +19,8 @@ interface ProductData {
   isSale?: boolean;
 }
 
-// Sample products database (in a real app, this would come from an API)
-const productsDatabase = [
+// Sample products data - this should ultimately come from your API/database
+const sampleProducts = [
   {
     id: "1",
     name: "Mountain Explorer X500",
@@ -29,79 +28,74 @@ const productsDatabase = [
     originalPrice: 749.99,
     imageSrc: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8YmljeWNsZXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60",
     category: "Mountain Bikes",
-    isNew: true,
+    isSale: true,
   },
   {
     id: "2",
-    name: "Urban Commuter C200",
-    price: 449.99,
-    originalPrice: 499.99,
+    name: "City Cruiser Deluxe",
+    price: 429.99,
     imageSrc: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmljeWNsZXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60",
     category: "City Bikes",
-    isSale: true,
   },
   {
     id: "3",
-    name: "Road Master R1000",
+    name: "Road Master Pro",
     price: 899.99,
     originalPrice: 999.99,
-    imageSrc: "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8cm9hZCUyMGJpa2V8ZW58MHx8MHx8&auto=format&fit=crop&w=800&q=60",
+    imageSrc: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8OXx8YmljeWNsZXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60",
     category: "Road Bikes",
-    isSale: true,
+    isNew: true,
   },
 ];
 
 export default function Wishlist() {
-  const [wishlistItems, setWishlistItems] = useState<ProductData[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<WishlistProduct[]>([]);
 
-  // Load wishlist from localStorage on component mount
   useEffect(() => {
     const loadWishlist = () => {
-      const wishlistData = localStorage.getItem('wishlist');
-      if (wishlistData) {
-        const wishlistIds = JSON.parse(wishlistData) as string[];
-        // Filter products to only include those in the wishlist
-        const items = productsDatabase.filter(product => wishlistIds.includes(product.id));
-        setWishlistItems(items);
-      } else {
+      try {
+        // Get wishlist IDs from localStorage
+        const wishlistData = localStorage.getItem('wishlist');
+        const wishlistIds = wishlistData ? JSON.parse(wishlistData) : [];
+        console.log("Wishlist IDs from localStorage:", wishlistIds);
+        
+        if (wishlistIds.length > 0) {
+          // For each ID in the wishlist, find the corresponding product
+          const items = wishlistIds.map(id => 
+            sampleProducts.find(product => product.id === id)
+          ).filter(Boolean);
+          
+          console.log("Wishlist items loaded:", items);
+          setWishlistItems(items);
+        } else {
+          console.log("No wishlist items found");
+          setWishlistItems([]);
+        }
+      } catch (error) {
+        console.error("Error loading wishlist:", error);
         setWishlistItems([]);
       }
     };
-
-    // Load initial wishlist
+    
+    // Initial load
     loadWishlist();
     
-    // Add event listener for wishlist updates
-    window.addEventListener('wishlistUpdated', loadWishlist);
+    // Listen for wishlist updates
     window.addEventListener('storage', loadWishlist);
+    window.addEventListener('wishlistUpdated', loadWishlist);
     
-    // Clean up
     return () => {
-      window.removeEventListener('wishlistUpdated', loadWishlist);
       window.removeEventListener('storage', loadWishlist);
+      window.removeEventListener('wishlistUpdated', loadWishlist);
     };
   }, []);
 
-  const removeItem = (id: string) => {
-    // Get current wishlist
-    const wishlistData = localStorage.getItem('wishlist');
-    if (wishlistData) {
-      const wishlist = JSON.parse(wishlistData) as string[];
-      // Remove the item
-      const updatedWishlist = wishlist.filter(itemId => itemId !== id);
-      // Save back to localStorage
-      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
-      
-      // Update state
-      setWishlistItems(wishlistItems.filter(item => item.id !== id));
-      
-      // Dispatch event for any listeners
-      window.dispatchEvent(new Event('wishlistUpdated'));
-      
-      // Show toast
-      const itemName = wishlistItems.find(item => item.id === id)?.name || 'Item';
-      toast.success(`${itemName} removed from wishlist`);
-    }
+  const clearWishlist = () => {
+    localStorage.setItem('wishlist', JSON.stringify([]));
+    setWishlistItems([]);
+    toast.success("Wishlist cleared");
+    // Dispatch event to update other components
+    window.dispatchEvent(new Event('wishlistUpdated'));
   };
 
   return (
@@ -109,56 +103,35 @@ export default function Wishlist() {
       <Header />
       <main className="flex-1 bg-cycle-light py-8 md:py-12">
         <div className="container mx-auto px-4 lg:px-8">
-          <h1 className="mb-6 text-3xl font-bold">My Wishlist</h1>
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-3xl font-bold">My Wishlist</h1>
+            {wishlistItems.length > 0 && (
+              <Button 
+                variant="outline" 
+                className="mt-4 border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 sm:mt-0"
+                onClick={clearWishlist}
+              >
+                Clear Wishlist
+              </Button>
+            )}
+          </div>
 
           {wishlistItems.length > 0 ? (
-            <div>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {wishlistItems.map((item) => (
-                  <div key={item.id} className="group relative">
-                    <ProductCard
-                      id={item.id}
-                      name={item.name}
-                      price={item.price}
-                      originalPrice={item.originalPrice}
-                      imageSrc={item.imageSrc}
-                      category={item.category}
-                      isNew={item.isNew}
-                      isSale={item.isSale}
-                    />
-                    <div className="absolute bottom-4 right-4 flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-full bg-white border-gray-200 hover:bg-red-50 hover:text-red-500"
-                        onClick={() => removeItem(item.id)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 flex justify-center">
-                <Button asChild className="bg-cycle hover:bg-cycle-dark">
-                  <Link to="/products">
-                    <ShoppingBag className="mr-2 h-4 w-4" />
-                    Continue Shopping
-                  </Link>
-                </Button>
-              </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {wishlistItems.map((product) => (
+                <ProductCard key={product.id} {...product} />
+              ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 text-center shadow-sm">
-              <Heart className="mb-4 h-16 w-16 text-cycle-gray" />
+              <ShoppingCart className="mb-4 h-16 w-16 text-cycle-gray" />
               <h2 className="mb-2 text-2xl font-semibold">Your wishlist is empty</h2>
               <p className="mb-6 text-cycle-gray">
-                You haven't added any items to your wishlist yet.
+                Start adding your favorite products to your wishlist!
               </p>
               <Button asChild className="bg-cycle hover:bg-cycle-dark">
                 <Link to="/products">
-                  Start Shopping
+                  Explore Products
                 </Link>
               </Button>
             </div>
