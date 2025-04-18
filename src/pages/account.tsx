@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -8,32 +7,71 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Package, Heart, Settings, ShoppingBag } from "lucide-react";
+import { registerUser, loginUser, logoutUser, getCurrentUser } from "@/utils/authUtils";
+import { toast } from "sonner";
+import { User as UserType } from "@/types/auth";
 
 export default function Account() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      setIsLoggedIn(true);
+      setCurrentUser(user);
+      setEmail(user.email);
+    }
+
+    const handleLogin = () => {
+      const user = getCurrentUser();
+      if (user) {
+        setIsLoggedIn(true);
+        setCurrentUser(user);
+        setEmail(user.email);
+      }
+    };
+
+    const handleLogout = () => {
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+      setEmail("");
+      setPassword("");
+    };
+
+    window.addEventListener('userLoggedIn', handleLogin);
+    window.addEventListener('userLoggedOut', handleLogout);
+
+    return () => {
+      window.removeEventListener('userLoggedIn', handleLogin);
+      window.removeEventListener('userLoggedOut', handleLogout);
+    };
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would validate credentials with a backend
-    if (email && password) {
-      setIsLoggedIn(true);
+    if (loginUser(email, password)) {
+      toast.success("Successfully logged in!");
+    } else {
+      toast.error("Invalid email or password");
     }
   };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would register the user with a backend
-    if (email && password) {
-      setIsLoggedIn(true);
+    if (registerUser(email, password)) {
+      loginUser(email, password); // Auto login after registration
+      toast.success("Successfully registered and logged in!");
+    } else {
+      toast.error("Email already exists");
     }
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setEmail("");
-    setPassword("");
+    logoutUser();
+    toast.success("Successfully logged out!");
   };
 
   return (
@@ -201,15 +239,7 @@ export default function Account() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="loginPassword">Password</Label>
-                            <a 
-                              href="#" 
-                              className="text-xs text-cycle hover:underline"
-                            >
-                              Forgot password?
-                            </a>
-                          </div>
+                          <Label htmlFor="loginPassword">Password</Label>
                           <Input 
                             id="loginPassword" 
                             type="password" 
