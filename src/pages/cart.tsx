@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -7,6 +6,7 @@ import { CartItemsList } from "@/components/cart/CartItemsList";
 import { OrderSummary } from "@/components/cart/OrderSummary";
 import { EmptyCart } from "@/components/cart/EmptyCart";
 import { CartItemType } from "@/components/cart/types";
+import { getCartFromStorage, saveCartToStorage } from "@/utils/storageUtils";
 
 export default function Cart() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
@@ -16,20 +16,9 @@ export default function Cart() {
   // Load cart from localStorage on component mount
   useEffect(() => {
     const loadCart = () => {
-      try {
-        const storedCart = localStorage.getItem('cart');
-        if (storedCart) {
-          const parsedCart = JSON.parse(storedCart);
-          console.log("Loading cart from localStorage:", parsedCart);
-          setCartItems(parsedCart);
-        } else {
-          console.log("No cart found in localStorage");
-          setCartItems([]);
-        }
-      } catch (error) {
-        console.error("Error loading cart from localStorage:", error);
-        setCartItems([]);
-      }
+      const loadedCart = getCartFromStorage();
+      console.log("Loading cart from localStorage:", loadedCart);
+      setCartItems(loadedCart);
     };
     
     // Initial load
@@ -47,9 +36,9 @@ export default function Cart() {
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-    // Dispatch event to notify other components
-    window.dispatchEvent(new Event('cartUpdated'));
+    if (cartItems.length > 0) {
+      saveCartToStorage(cartItems);
+    }
   }, [cartItems]);
 
   const incrementQuantity = (id: string) => {
@@ -80,6 +69,7 @@ export default function Cart() {
 
   const clearCart = () => {
     setCartItems([]);
+    saveCartToStorage([]);
     toast.success("Cart cleared");
   };
 

@@ -28,7 +28,9 @@ export const addToCart = (item: CartItemType) => {
     
     // Check if product already exists in cart with the same color and size
     const existingItemIndex = cart.findIndex(
-      cartItem => cartItem.id === item.id && cartItem.color === item.color && cartItem.size === item.size
+      cartItem => cartItem.id === item.id && 
+      cartItem.color === item.color && 
+      cartItem.size === item.size
     );
     
     if (existingItemIndex !== -1) {
