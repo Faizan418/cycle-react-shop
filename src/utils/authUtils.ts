@@ -42,6 +42,38 @@ export const logoutUser = () => {
   window.dispatchEvent(new Event('userLoggedOut'));
 };
 
+export const updateUserProfile = (userData: Partial<User>): boolean => {
+  try {
+    // Get current user
+    const currentUserData = localStorage.getItem('currentUser');
+    if (!currentUserData) return false;
+    
+    const currentUser = JSON.parse(currentUserData) as User;
+    const email = currentUser.email;
+    
+    // Get all users and find the current user
+    const users = getUsersFromStorage();
+    const userIndex = users.findIndex(u => u.email === email);
+    
+    if (userIndex === -1) return false;
+    
+    // Update user data (except email which is used as identifier)
+    const updatedUser = { ...users[userIndex], ...userData };
+    users[userIndex] = updatedUser;
+    
+    // Save updated users list and current user
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    
+    // Dispatch event to notify profile update
+    window.dispatchEvent(new Event('userProfileUpdated'));
+    return true;
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return false;
+  }
+};
+
 export const getCurrentUser = (): User | null => {
   try {
     const userData = localStorage.getItem('currentUser');

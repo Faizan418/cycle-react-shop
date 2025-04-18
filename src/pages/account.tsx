@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Package, Heart, Settings, ShoppingBag } from "lucide-react";
-import { registerUser, loginUser, logoutUser, getCurrentUser } from "@/utils/authUtils";
+import { registerUser, loginUser, logoutUser, getCurrentUser, updateUserProfile } from "@/utils/authUtils";
 import { toast } from "sonner";
 import { User as UserType } from "@/types/auth";
 
@@ -15,7 +16,11 @@ export default function Account() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("login");
 
   useEffect(() => {
     const user = getCurrentUser();
@@ -23,6 +28,8 @@ export default function Account() {
       setIsLoggedIn(true);
       setCurrentUser(user);
       setEmail(user.email);
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
     }
 
     const handleLogin = () => {
@@ -31,6 +38,16 @@ export default function Account() {
         setIsLoggedIn(true);
         setCurrentUser(user);
         setEmail(user.email);
+        setFirstName(user.firstName || "");
+        setLastName(user.lastName || "");
+      }
+    };
+
+    const handleProfileUpdate = () => {
+      const user = getCurrentUser();
+      if (user) {
+        setFirstName(user.firstName || "");
+        setLastName(user.lastName || "");
       }
     };
 
@@ -39,14 +56,19 @@ export default function Account() {
       setCurrentUser(null);
       setEmail("");
       setPassword("");
+      setFirstName("");
+      setLastName("");
+      setPhone("");
     };
 
     window.addEventListener('userLoggedIn', handleLogin);
     window.addEventListener('userLoggedOut', handleLogout);
+    window.addEventListener('userProfileUpdated', handleProfileUpdate);
 
     return () => {
       window.removeEventListener('userLoggedIn', handleLogin);
       window.removeEventListener('userLoggedOut', handleLogout);
+      window.removeEventListener('userProfileUpdated', handleProfileUpdate);
     };
   }, []);
 
@@ -61,9 +83,14 @@ export default function Account() {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !password) {
+      toast.error("Email and password are required");
+      return;
+    }
+    
     if (registerUser(email, password)) {
-      loginUser(email, password); // Auto login after registration
-      toast.success("Successfully registered and logged in!");
+      toast.success("Registration successful! You can now login.");
+      setActiveTab("login"); // Switch to login tab after successful registration
     } else {
       toast.error("Email already exists");
     }
@@ -72,6 +99,15 @@ export default function Account() {
   const handleLogout = () => {
     logoutUser();
     toast.success("Successfully logged out!");
+  };
+
+  const handleProfileUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (updateUserProfile({ firstName, lastName })) {
+      toast.success("Profile updated successfully!");
+    } else {
+      toast.error("Failed to update profile");
+    }
   };
 
   return (
@@ -91,7 +127,7 @@ export default function Account() {
                         <User className="h-5 w-5 text-cycle" />
                       </div>
                       <div>
-                        <CardTitle>John Doe</CardTitle>
+                        <CardTitle>{firstName || lastName ? `${firstName} ${lastName}`.trim() : "User"}</CardTitle>
                         <CardDescription>{email}</CardDescription>
                       </div>
                     </div>
@@ -135,29 +171,44 @@ export default function Account() {
                     <CardDescription>Manage your account details</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={handleProfileUpdate}>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
                           <Label htmlFor="firstName">First Name</Label>
-                          <Input id="firstName" placeholder="John" defaultValue="John" />
+                          <Input 
+                            id="firstName" 
+                            placeholder="First Name" 
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="lastName">Last Name</Label>
-                          <Input id="lastName" placeholder="Doe" defaultValue="Doe" />
+                          <Input 
+                            id="lastName" 
+                            placeholder="Last Name" 
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                          />
                         </div>
                       </div>
                       
                       <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <Input id="email" type="email" value={email} readOnly disabled />
                       </div>
                       
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone</Label>
-                        <Input id="phone" placeholder="+1 (555) 123-4567" />
+                        <Input 
+                          id="phone" 
+                          placeholder="+1 (555) 123-4567" 
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                        />
                       </div>
                       
-                      <Button type="button" className="bg-cycle hover:bg-cycle-dark">
+                      <Button type="submit" className="bg-cycle hover:bg-cycle-dark">
                         Update Profile
                       </Button>
                     </form>
@@ -220,7 +271,7 @@ export default function Account() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue="login">
+                  <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="login">Login</TabsTrigger>
                       <TabsTrigger value="register">Register</TabsTrigger>
@@ -258,11 +309,19 @@ export default function Account() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="firstName">First Name</Label>
-                            <Input id="firstName" required />
+                            <Input 
+                              id="firstName"
+                              value={firstName}
+                              onChange={(e) => setFirstName(e.target.value)}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="lastName">Last Name</Label>
-                            <Input id="lastName" required />
+                            <Input 
+                              id="lastName" 
+                              value={lastName}
+                              onChange={(e) => setLastName(e.target.value)}
+                            />
                           </div>
                         </div>
                         <div className="space-y-2">
