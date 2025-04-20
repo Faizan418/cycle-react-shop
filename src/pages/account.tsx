@@ -7,10 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Package, Heart, Settings, ShoppingBag } from "lucide-react";
-import { registerUser, loginUser, logoutUser, getCurrentUser, updateUserProfile } from "@/utils/authUtils";
+import { User, Heart, Settings, ShoppingBag } from "lucide-react";
+import { registerUser, loginUser, logoutUser, getCurrentUser } from "@/utils/authUtils";
 import { toast } from "sonner";
 import { User as UserType } from "@/types/auth";
+import { ProfileSection } from "@/components/account/ProfileSection";
+import { OrdersSection } from "@/components/account/OrdersSection";
+import { SettingsSection } from "@/components/account/SettingsSection";
 
 export default function Account() {
   const [searchParams] = useSearchParams();
@@ -146,19 +149,19 @@ export default function Account() {
                   </CardHeader>
                   <CardContent>
                     <nav className="flex flex-col space-y-1">
-                      <Button variant="ghost" className="justify-start">
+                      <Button variant="ghost" className="justify-start" onClick={() => setActiveTab("profile")}>
                         <User className="mr-2 h-4 w-4" />
                         Profile
                       </Button>
-                      <Button variant="ghost" className="justify-start">
-                        <Package className="mr-2 h-4 w-4" />
+                      <Button variant="ghost" className="justify-start" onClick={() => setActiveTab("orders")}>
+                        <ShoppingBag className="mr-2 h-4 w-4" />
                         Orders
                       </Button>
-                      <Button variant="ghost" className="justify-start">
+                      <Button variant="ghost" className="justify-start" onClick={() => setActiveTab("wishlist")}>
                         <Heart className="mr-2 h-4 w-4" />
                         Wishlist
                       </Button>
-                      <Button variant="ghost" className="justify-start">
+                      <Button variant="ghost" className="justify-start" onClick={() => setActiveTab("settings")}>
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                       </Button>
@@ -177,100 +180,20 @@ export default function Account() {
               </div>
 
               <div className="lg:col-span-9">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Manage your account details</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form className="space-y-4" onSubmit={handleProfileUpdate}>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName">First Name</Label>
-                          <Input 
-                            id="firstName" 
-                            placeholder="First Name" 
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName">Last Name</Label>
-                          <Input 
-                            id="lastName" 
-                            placeholder="Last Name" 
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" value={email} readOnly disabled />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone</Label>
-                        <Input 
-                          id="phone" 
-                          placeholder="+1 (555) 123-4567" 
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                        />
-                      </div>
-                      
-                      <Button type="submit" className="bg-cycle hover:bg-cycle-dark">
-                        Update Profile
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-                
-                <div className="mt-6">
+                {activeTab === "profile" && <ProfileSection />}
+                {activeTab === "orders" && <OrdersSection />}
+                {activeTab === "wishlist" && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Recent Orders</CardTitle>
-                      <CardDescription>Your recent purchase history</CardDescription>
+                      <CardTitle>My Wishlist</CardTitle>
+                      <CardDescription>Items you've saved for later</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="rounded-md border">
-                        <div className="flex flex-col">
-                          <div className="p-4 border-b flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">#ORD12345</p>
-                              <p className="text-sm text-gray-500">March 15, 2025</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">$599.99</p>
-                              <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
-                                Delivered
-                              </span>
-                            </div>
-                          </div>
-                          <div className="p-4 border-b flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">#ORD12356</p>
-                              <p className="text-sm text-gray-500">February 28, 2025</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">$449.99</p>
-                              <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
-                                Shipped
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <p className="text-muted-foreground">No items in your wishlist yet.</p>
                     </CardContent>
-                    <CardFooter>
-                      <Button variant="outline" className="w-full">
-                        <ShoppingBag className="mr-2 h-4 w-4" />
-                        View All Orders
-                      </Button>
-                    </CardFooter>
                   </Card>
-                </div>
+                )}
+                {activeTab === "settings" && <SettingsSection />}
               </div>
             </div>
           ) : (
