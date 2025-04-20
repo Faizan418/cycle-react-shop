@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Heart, Settings, ShoppingBag } from "lucide-react";
-import { registerUser, loginUser, logoutUser, getCurrentUser } from "@/utils/authUtils";
+import { registerUser, loginUser, logoutUser, getCurrentUser, updateUserProfile } from "@/utils/authUtils";
 import { toast } from "sonner";
 import { User as UserType } from "@/types/auth";
 import { ProfileSection } from "@/components/account/ProfileSection";
