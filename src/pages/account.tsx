@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { User as UserType } from "@/types/auth";
 
 export default function Account() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,6 +32,15 @@ export default function Account() {
       setEmail(user.email);
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
+      
+      if (searchParams.get('tab') === 'login' || searchParams.get('tab') === 'register') {
+        navigate('/');
+      }
+    }
+
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'login' || tabParam === 'register') {
+      setActiveTab(tabParam);
     }
 
     const handleLogin = () => {
@@ -70,12 +81,13 @@ export default function Account() {
       window.removeEventListener('userLoggedOut', handleLogout);
       window.removeEventListener('userProfileUpdated', handleProfileUpdate);
     };
-  }, []);
+  }, [navigate, searchParams]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (loginUser(email, password)) {
       toast.success("Successfully logged in!");
+      navigate('/');
     } else {
       toast.error("Invalid email or password");
     }
@@ -89,8 +101,8 @@ export default function Account() {
     }
     
     if (registerUser(email, password)) {
-      toast.success("Registration successful! You can now login.");
-      setActiveTab("login"); // Switch to login tab after successful registration
+      toast.success("Registration successful! Please login to continue.");
+      setActiveTab("login");
     } else {
       toast.error("Email already exists");
     }
