@@ -16,7 +16,7 @@ export const SettingsSection = () => {
   };
 
   return (
-    <Card>
+    <Card className="transition-colors duration-300">
       <CardHeader>
         <CardTitle>Account Settings</CardTitle>
         <CardDescription>Manage your account preferences</CardDescription>
