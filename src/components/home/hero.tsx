@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="relative flex min-h-[600px] items-center overflow-hidden bg-gradient-to-br from-[#1EAEDB] via-[#33C3F0] to-[#0FA0CE]">
+    <section className="relative flex min-h-[600px] items-center overflow-hidden bg-gradient-to-br from-[#000000] via-[#0f1346] to-[#000000]">
       <div className="container mx-auto px-4 py-12 lg:px-8 lg:py-16">
         <div className="relative z-10 grid gap-8 md:grid-cols-2">
           <div className="flex flex-col justify-center">
@@ -20,13 +20,13 @@ export function Hero() {
               From city bikes to mountain rides, we've got you covered.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button asChild className="bg-white text-cycle hover:bg-white/90">
+              <Button asChild className="bg-white text-blue-900 hover:bg-white/90">
                 <Link to="/products">
                   Shop Collection
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="border-white text-white hover:bg-white hover:text-cycle">
+              <Button asChild variant="outline" className="border-white text-blue-900 hover:bg-white/90">
                 <Link to="/about">Learn More</Link>
               </Button>
             </div>

@@ -114,15 +114,15 @@ export function Header() {
       </CommandDialog>
 
       <header 
-        className={`sticky top-0 z-40 w-full transition-all duration-300 ${
-          isScrolled ? "bg-white shadow-sm" : "bg-transparent"
-        }`}
-      >
+  className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+    isScrolled ? "bg-gradient-to-br  from-[#0f1346] via-[#000000] to-[#0f1346] text-black shadow-sm" : "bg-gradient-to-br from-[#000000] via-[#0f1346] to-[#000000] text-white"
+  }`}
+>
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex h-16 items-center justify-between lg:h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-cycle-dark">Cycle</span>
+              <span className="text-2xl font-bold text-white">Cycle</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -131,7 +131,7 @@ export function Header() {
                 <Link
                   key={link.name}
                   to={link.href}
-                  className="text-sm font-medium text-cycle-dark hover:text-cycle transition-colors"
+                  className="text-sm font-medium text-white hover:text-cycle transition-colors"
                 >
                   {link.name}
                 </Link>
@@ -143,24 +143,24 @@ export function Header() {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-cycle-dark hover:text-cycle"
+                className="text-white hover:text-blue-900"
                 onClick={() => setOpen(true)}
               >
                 <Search className="h-5 w-5" />
               </Button>
               <Link to="/account">
-                <Button variant="ghost" size="icon" className="text-cycle-dark hover:text-cycle">
+                <Button variant="ghost" size="icon" className="text-white hover:text-blue-900">
                   <User className="h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/wishlist">
-                <Button variant="ghost" size="icon" className="relative text-cycle-dark hover:text-cycle">
+                <Button variant="ghost" size="icon" className="relative text-white hover:text-blue-900">
                   <Heart className="h-5 w-5" />
                   {wishlistCount > 0 && <BadgeCount count={wishlistCount} className="absolute -right-1 -top-1" />}
                 </Button>
               </Link>
               <Link to="/cart">
-                <Button variant="ghost" size="icon" className="relative text-cycle-dark hover:text-cycle">
+                <Button variant="ghost" size="icon" className="relative text-white hover:text-blue-900">
                   <ShoppingCart className="h-5 w-5" />
                   {cartCount > 0 && <BadgeCount count={cartCount} className="absolute -right-1 -top-1" />}
                 </Button>
