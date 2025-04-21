@@ -1,14 +1,14 @@
 
-import { toast as sonnerToast } from "sonner"
+import { Toaster as SonnerToaster, toast } from "sonner"
 import { useTheme } from "@/components/theme/ThemeProvider"
 
-type ToasterProps = React.ComponentProps<typeof import("sonner").Toaster>
+type ToasterProps = React.ComponentProps<typeof SonnerToaster>
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "light" } = useTheme()
 
   return (
-    <sonnerToast.Toaster
+    <SonnerToaster
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       toastOptions={{
@@ -27,4 +27,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
-export { Toaster, sonnerToast as toast }
+export { Toaster, toast }
